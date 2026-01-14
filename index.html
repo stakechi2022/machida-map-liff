@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>町田市マップ</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- LIFF SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>🗺️ 町田市マップ</h1>
+            <div id="status">読み込み中...</div>
+        </header>
+        
+        <div id="map"></div>
+        
+        <div id="info">
+            <h2>町田市について</h2>
+            <p>東京都の南端に位置する町田市の地図です。</p>
+            <div id="user-info"></div>
+        </div>
+        
+        <footer>
+            <button id="close-btn" style="display:none;">閉じる</button>
+        </footer>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- App JS -->
+    <script src="app.js"></script>
+</body>
+</html>
