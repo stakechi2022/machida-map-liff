@@ -6,16 +6,23 @@ const MACHIDA_CENTER = {
 
 // グローバル変数
 let map;
+let geocoder;
 let statusElement;
 let selectedLocation = null;
 let propertyRecords = {};
-let highlightLayers = {};
+let highlightCircles = {};
+let infoWindow;
 
 // ローカルストレージのキー
 const STORAGE_KEY = 'machida_property_records';
 
 // 1ヶ月のミリ秒
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+
+// Google Maps初期化（コールバック関数）
+window.initMap = function() {
+    initializeMap();
+};
 
 // LIFF初期化
 async function initializeLiff() {
@@ -46,16 +53,10 @@ async function initializeLiff() {
             });
         }
 
-        // 地図の初期化
-        initializeMap();
-
     } catch (error) {
         console.error('LIFF初期化エラー:', error);
         statusElement.textContent = 'エラーが発生しました';
         statusElement.style.color = '#ff4444';
-        
-        // エラーが発生してもマップは表示する
-        initializeMap();
     }
 }
 
@@ -78,31 +79,37 @@ async function getUserProfile() {
 // 地図の初期化
 function initializeMap() {
     try {
-        // Leafletマップの作成
-        map = L.map('map').setView([MACHIDA_CENTER.lat, MACHIDA_CENTER.lng], 13);
+        // Google Mapの作成
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: MACHIDA_CENTER,
+            zoom: 13,
+            mapTypeControl: true,
+            streetViewControl: true,
+            fullscreenControl: true
+        });
 
-        // OpenStreetMapタイルレイヤーの追加
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            maxZoom: 19
-        }).addTo(map);
+        // Geocoderの初期化
+        geocoder = new google.maps.Geocoder();
+
+        // InfoWindowの初期化
+        infoWindow = new google.maps.InfoWindow();
 
         // 町田市の主要スポットにマーカーを追加
         addMachidaMarkers();
 
         // 地図クリックイベント
-        map.on('click', onMapClick);
-
-        // 地図が読み込まれたらステータスを更新
-        map.whenReady(() => {
-            if (statusElement.textContent === 'LIFF初期化中...' || 
-                statusElement.textContent === '読み込み中...') {
-                statusElement.textContent = '地図表示完了';
-            }
-            setTimeout(() => {
-                statusElement.style.opacity = '0.7';
-            }, 2000);
+        map.addListener('click', (event) => {
+            onMapClick(event.latLng);
         });
+
+        // ステータス更新
+        if (statusElement.textContent === 'LIFF初期化中...' || 
+            statusElement.textContent === '読み込み中...') {
+            statusElement.textContent = '地図表示完了';
+        }
+        setTimeout(() => {
+            statusElement.style.opacity = '0.7';
+        }, 2000);
 
         // ローカルストレージから記録を読み込み
         loadPropertyRecords();
@@ -115,72 +122,6 @@ function initializeMap() {
         statusElement.textContent = '地図の読み込みに失敗しました';
         statusElement.style.color = '#ff4444';
     }
-}
-
-// 町田市の主要スポットにマーカーを追加
-function addMachidaMarkers() {
-    const spots = [
-        {
-            name: '町田駅',
-            lat: 35.5437,
-            lng: 139.4467,
-            description: '小田急線・JR横浜線が乗り入れる町田市の中心駅'
-        },
-        {
-            name: '町田市役所',
-            lat: 35.5486,
-            lng: 139.4386,
-            description: '町田市の行政の中心'
-        },
-        {
-            name: '薬師池公園',
-            lat: 35.5833,
-            lng: 139.4167,
-            description: '四季折々の自然が楽しめる都立公園'
-        },
-        {
-            name: '町田リス園',
-            lat: 35.5833,
-            lng: 139.4194,
-            description: '約200匹のタイワンリスと触れ合える動物園'
-        },
-        {
-            name: '町田天満宮',
-            lat: 35.5456,
-            lng: 139.4481,
-            description: '学問の神様・菅原道真を祀る神社'
-        }
-    ];
-
-    // カスタムアイコンの作成
-    const customIcon = L.icon({
-        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41]
-    });
-
-    // 各スポットにマーカーを追加
-    spots.forEach(spot => {
-        const marker = L.marker([spot.lat, spot.lng], { icon: customIcon })
-            .addTo(map)
-            .bindPopup(`
-                <div style="min-width: 200px;">
-                    <h3 style="margin: 0 0 8px 0; color: #06C755; font-size: 16px;">${spot.name}</h3>
-                    <p style="margin: 0; font-size: 13px; color: #666;">${spot.description}</p>
-                </div>
-            `);
-    });
-
-    // 町田市の境界を示す円を追加（おおよその範囲）
-    L.circle([MACHIDA_CENTER.lat, MACHIDA_CENTER.lng], {
-        color: '#06C755',
-        fillColor: '#06C755',
-        fillOpacity: 0.1,
-        radius: 5000
-    }).addTo(map);
 }
 
 // イベントリスナーの設定
@@ -208,7 +149,7 @@ function setupEventListeners() {
 }
 
 // 住所検索
-async function searchAddress() {
+function searchAddress() {
     const townName = document.getElementById('town-name').value.trim();
     const chome = document.getElementById('chome').value.trim();
     const banchi = document.getElementById('banchi').value.trim();
@@ -228,33 +169,34 @@ async function searchAddress() {
     statusElement.textContent = '住所を検索中...';
     statusElement.style.opacity = '1';
 
-    try {
-        // Nominatim APIで住所をジオコーディング
-        const response = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`
-        );
-        const data = await response.json();
-
-        if (data && data.length > 0) {
-            const lat = parseFloat(data[0].lat);
-            const lng = parseFloat(data[0].lon);
+    // Google Maps Geocoding APIで住所をジオコーディング
+    geocoder.geocode({ address: address, region: 'JP' }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+            const location = results[0].geometry.location;
+            const formattedAddress = results[0].formatted_address;
             
             // 地図を移動してズーム
-            map.setView([lat, lng], 18);
+            map.setCenter(location);
+            map.setZoom(18);
             
             // マーカーを追加
-            const marker = L.marker([lat, lng])
-                .addTo(map)
-                .bindPopup(`
-                    <div style="min-width: 200px;">
-                        <h3 style="margin: 0 0 8px 0; color: #06C755; font-size: 14px;">📍 ${address}</h3>
-                        <button onclick="openRecordPanelFromSearch(${lat}, ${lng}, '${address}')" 
-                                style="background: #06C755; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; width: 100%;">
-                            📝 記録を追加
-                        </button>
-                    </div>
-                `)
-                .openPopup();
+            const marker = new google.maps.Marker({
+                position: location,
+                map: map,
+                animation: google.maps.Animation.DROP
+            });
+
+            // InfoWindowを表示
+            infoWindow.setContent(`
+                <div style="min-width: 200px; padding: 10px;">
+                    <h3 style="margin: 0 0 8px 0; color: #06C755; font-size: 14px;">📍 ${formattedAddress}</h3>
+                    <button onclick="openRecordPanelFromSearch(${location.lat()}, ${location.lng()}, '${formattedAddress.replace(/'/g, "\\'")}')" 
+                            style="background: #06C755; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; width: 100%;">
+                        📝 記録を追加
+                    </button>
+                </div>
+            `);
+            infoWindow.open(map, marker);
             
             statusElement.textContent = '住所が見つかりました';
             setTimeout(() => {
@@ -262,21 +204,13 @@ async function searchAddress() {
             }, 2000);
         } else {
             statusElement.textContent = '住所が見つかりませんでした';
-            alert('住所が見つかりませんでした。入力内容を確認してください。');
+            alert('住所が見つかりませんでした。入力内容を確認してください。\nステータス: ' + status);
             setTimeout(() => {
                 statusElement.textContent = '地図表示完了';
                 statusElement.style.opacity = '0.7';
             }, 3000);
         }
-    } catch (error) {
-        console.error('住所検索エラー:', error);
-        statusElement.textContent = '検索エラーが発生しました';
-        alert('住所検索中にエラーが発生しました');
-        setTimeout(() => {
-            statusElement.textContent = '地図表示完了';
-            statusElement.style.opacity = '0.7';
-        }, 3000);
-    }
+    });
 }
 
 // 検索から記録パネルを開く（グローバル関数）
@@ -285,14 +219,41 @@ window.openRecordPanelFromSearch = function(lat, lng, address) {
     openRecordPanel();
 };
 
-// 地図クリック時の処理
-function onMapClick(e) {
-    selectedLocation = {
-        lat: e.latlng.lat,
-        lng: e.latlng.lng,
-        address: `緯度: ${e.latlng.lat.toFixed(6)}, 経度: ${e.latlng.lng.toFixed(6)}`
-    };
-    openRecordPanel();
+// 地図クリック時の処理（逆ジオコーディングで住所を取得）
+function onMapClick(latLng) {
+    statusElement.textContent = '住所を取得中...';
+    statusElement.style.opacity = '1';
+
+    // 逆ジオコーディングで住所を取得
+    geocoder.geocode({ location: latLng }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+            const address = results[0].formatted_address;
+            selectedLocation = {
+                lat: latLng.lat(),
+                lng: latLng.lng(),
+                address: address
+            };
+            openRecordPanel();
+            
+            statusElement.textContent = '地図表示完了';
+            setTimeout(() => {
+                statusElement.style.opacity = '0.7';
+            }, 1000);
+        } else {
+            // 住所が取得できない場合は緯度経度を使用
+            selectedLocation = {
+                lat: latLng.lat(),
+                lng: latLng.lng(),
+                address: `緯度: ${latLng.lat().toFixed(6)}, 経度: ${latLng.lng().toFixed(6)}`
+            };
+            openRecordPanel();
+            
+            statusElement.textContent = '地図表示完了';
+            setTimeout(() => {
+                statusElement.style.opacity = '0.7';
+            }, 1000);
+        }
+    });
 }
 
 // 記録パネルを開く
@@ -302,8 +263,9 @@ function openRecordPanel() {
     const memoInput = document.getElementById('memo-input');
     const deleteBtn = document.getElementById('delete-record-btn');
 
-    const locationKey = getLocationKey(selectedLocation.lat, selectedLocation.lng);
-    const existingRecord = propertyRecords[locationKey];
+    // 住所をキーとして使用
+    const addressKey = normalizeAddress(selectedLocation.address);
+    const existingRecord = propertyRecords[addressKey];
 
     recordInfo.innerHTML = `
         <strong>📍 選択位置:</strong><br>
@@ -338,10 +300,10 @@ function saveRecord() {
         return;
     }
 
-    const locationKey = getLocationKey(selectedLocation.lat, selectedLocation.lng);
+    const addressKey = normalizeAddress(selectedLocation.address);
     const timestamp = Date.now();
 
-    propertyRecords[locationKey] = {
+    propertyRecords[addressKey] = {
         lat: selectedLocation.lat,
         lng: selectedLocation.lng,
         address: selectedLocation.address,
@@ -350,7 +312,7 @@ function saveRecord() {
     };
 
     savePropertyRecords();
-    addHighlight(locationKey, selectedLocation.lat, selectedLocation.lng);
+    addHighlight(addressKey, selectedLocation.lat, selectedLocation.lng, selectedLocation.address, memo, timestamp);
     closeRecordPanel();
 
     statusElement.textContent = '記録を保存しました';
@@ -367,11 +329,11 @@ function deleteRecord() {
         return;
     }
 
-    const locationKey = getLocationKey(selectedLocation.lat, selectedLocation.lng);
+    const addressKey = normalizeAddress(selectedLocation.address);
     
-    delete propertyRecords[locationKey];
+    delete propertyRecords[addressKey];
     savePropertyRecords();
-    removeHighlight(locationKey);
+    removeHighlight(addressKey);
     closeRecordPanel();
 
     statusElement.textContent = '記録を削除しました';
@@ -383,60 +345,69 @@ function deleteRecord() {
 }
 
 // ハイライトを追加
-function addHighlight(locationKey, lat, lng) {
+function addHighlight(addressKey, lat, lng, address, memo, timestamp) {
     // 既存のハイライトを削除
-    removeHighlight(locationKey);
+    removeHighlight(addressKey);
 
     // 円形のハイライトを追加
-    const circle = L.circle([lat, lng], {
-        color: '#FFD700',
+    const circle = new google.maps.Circle({
+        strokeColor: '#FFD700',
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
         fillColor: '#FFFF00',
         fillOpacity: 0.6,
+        map: map,
+        center: { lat, lng },
         radius: 20,
-        weight: 2
-    }).addTo(map);
+        clickable: true
+    });
 
-    // ポップアップを追加
-    const record = propertyRecords[locationKey];
-    circle.bindPopup(`
-        <div style="min-width: 200px;">
-            <h3 style="margin: 0 0 8px 0; color: #FFD700; font-size: 14px;">📝 記録済み物件</h3>
-            <p style="margin: 5px 0; font-size: 13px;"><strong>メモ:</strong> ${record.memo}</p>
-            <p style="margin: 5px 0; font-size: 11px; color: #666;">記録日時: ${new Date(record.timestamp).toLocaleString('ja-JP')}</p>
-            <button onclick="editRecord('${locationKey}')" 
-                    style="background: #06C755; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 5px;">
-                ✏️ 編集
-            </button>
-        </div>
-    `);
+    // クリックイベント
+    circle.addListener('click', () => {
+        infoWindow.setContent(`
+            <div style="min-width: 200px; padding: 10px;">
+                <h3 style="margin: 0 0 8px 0; color: #FFD700; font-size: 14px;">📝 記録済み物件</h3>
+                <p style="margin: 5px 0; font-size: 12px;"><strong>住所:</strong> ${address}</p>
+                <p style="margin: 5px 0; font-size: 13px;"><strong>メモ:</strong> ${memo}</p>
+                <p style="margin: 5px 0; font-size: 11px; color: #666;">記録日時: ${new Date(timestamp).toLocaleString('ja-JP')}</p>
+                <button onclick="editRecord('${addressKey.replace(/'/g, "\\'")}', ${lat}, ${lng}, '${address.replace(/'/g, "\\'")}')" 
+                        style="background: #06C755; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 5px;">
+                    ✏️ 編集
+                </button>
+            </div>
+        `);
+        infoWindow.setPosition({ lat, lng });
+        infoWindow.open(map);
+    });
 
-    highlightLayers[locationKey] = circle;
+    highlightCircles[addressKey] = circle;
 }
 
 // ハイライトを削除
-function removeHighlight(locationKey) {
-    if (highlightLayers[locationKey]) {
-        map.removeLayer(highlightLayers[locationKey]);
-        delete highlightLayers[locationKey];
+function removeHighlight(addressKey) {
+    if (highlightCircles[addressKey]) {
+        highlightCircles[addressKey].setMap(null);
+        delete highlightCircles[addressKey];
     }
 }
 
 // 記録を編集（グローバル関数）
-window.editRecord = function(locationKey) {
-    const record = propertyRecords[locationKey];
+window.editRecord = function(addressKey, lat, lng, address) {
+    const record = propertyRecords[addressKey];
     if (record) {
         selectedLocation = {
-            lat: record.lat,
-            lng: record.lng,
-            address: record.address
+            lat: lat,
+            lng: lng,
+            address: address
         };
         openRecordPanel();
     }
 };
 
-// 位置のキーを生成（緯度経度を丸めて同じ場所として扱う）
-function getLocationKey(lat, lng) {
-    return `${lat.toFixed(5)}_${lng.toFixed(5)}`;
+// 住所を正規化（キーとして使用）
+function normalizeAddress(address) {
+    // 空白を削除し、統一されたキーを作成
+    return address.replace(/\s+/g, '').trim();
 }
 
 // ローカルストレージに保存
@@ -458,16 +429,16 @@ function loadPropertyRecords() {
             
             // 期限切れの記録をチェックして表示
             const now = Date.now();
-            Object.keys(propertyRecords).forEach(locationKey => {
-                const record = propertyRecords[locationKey];
+            Object.keys(propertyRecords).forEach(addressKey => {
+                const record = propertyRecords[addressKey];
                 const age = now - record.timestamp;
                 
                 if (age < ONE_MONTH_MS) {
                     // 1ヶ月以内の記録はハイライト表示
-                    addHighlight(locationKey, record.lat, record.lng);
+                    addHighlight(addressKey, record.lat, record.lng, record.address, record.memo, record.timestamp);
                 } else {
                     // 1ヶ月以上経過した記録は非表示（データは保持）
-                    console.log(`記録が期限切れです: ${locationKey}`);
+                    console.log(`記録が期限切れです: ${addressKey}`);
                 }
             });
         }
@@ -481,13 +452,13 @@ setInterval(() => {
     const now = Date.now();
     let hasExpired = false;
     
-    Object.keys(propertyRecords).forEach(locationKey => {
-        const record = propertyRecords[locationKey];
+    Object.keys(propertyRecords).forEach(addressKey => {
+        const record = propertyRecords[addressKey];
         const age = now - record.timestamp;
         
-        if (age >= ONE_MONTH_MS && highlightLayers[locationKey]) {
+        if (age >= ONE_MONTH_MS && highlightCircles[addressKey]) {
             // 期限切れのハイライトを削除
-            removeHighlight(locationKey);
+            removeHighlight(addressKey);
             hasExpired = true;
         }
     });

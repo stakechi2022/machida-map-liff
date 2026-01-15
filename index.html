@@ -3,17 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>町田市マップ</title>
+    <title>町田市献本マップ</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- LIFF SDK -->
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
     <div id="app">
         <header>
-            <h1>🗺️ 町田市マップ</h1>
+            <h1>🗺️ 町田市献本マップ</h1>
             <div id="status">読み込み中...</div>
         </header>
         
@@ -43,9 +41,9 @@
         
         <div id="map"></div>
         
-        <!-- 物件記録パネル -->
+        <!-- 献本メモパネル -->
         <div id="record-panel" style="display:none;">
-            <h3>📝 物件記録</h3>
+            <h3>📝 献本メモ</h3>
             <div id="record-info"></div>
             <textarea id="memo-input" placeholder="メモを入力してください..."></textarea>
             <div class="button-group">
@@ -56,9 +54,9 @@
         </div>
         
         <div id="info">
-            <h2>町田市について</h2>
-            <p>東京都の南端に位置する町田市の地図です。</p>
-            <p class="info-note">💡 地図上をクリックして物件を選択し、メモを記録できます。記録された物件は黄色くハイライトされます。</p>
+            <h2>町田市献本マップ</h2>
+            <p>町田支部管内で献本により主の愛が届いた記録。</p>
+            <p class="info-note">💡 地図上をクリックして場所を選択し、メモを記録できます。記録された場所は黄色く光りますが、1か月経つと消えます。</p>
             <div id="user-info"></div>
         </div>
         
@@ -67,9 +65,9 @@
         </footer>
     </div>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- App JS -->
+    <!-- App JS (must be loaded before Google Maps callback) -->
     <script src="app.js"></script>
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&language=ja&callback=initMap" async defer></script>
 </body>
 </html>

@@ -2,6 +2,8 @@
 
 町田市の地図を表示するLINE Front-end Framework (LIFF)アプリケーションです。
 
+**🆕 Google Maps版にアップグレード！住所単位での物件管理に対応しました。**
+
 ## 📋 機能
 
 - 🗺️ 町田市の地図表示（Leaflet.js使用）
@@ -20,9 +22,12 @@
   - 町名、丁目、番地、号を入力して住所を検索
   - 東京都町田市の住所に対応
   - 番地や号が未入力でも大まかな位置を表示
+  - Google Maps Geocoding APIで高精度な検索
   
-- 📝 **物件記録機能**
+- 📝 **物件記録機能（住所ベース）**
   - 地図上をクリックして物件を選択
+  - **逆ジオコーディングで自動的に住所を取得**
+  - **住所単位で物件を管理**（緯度経度ではなく住所がキー）
   - メモを記録して保存
   - 記録された物件は黄色くハイライト表示
   
@@ -30,14 +35,38 @@
   - 記録の編集・削除が可能
   - タイムスタンプで記録日時を保存
   - ローカルストレージに自動保存
+  - 同じ住所の記録は統合管理
   
 - ⏰ **自動期限管理**
   - 記録日から1ヶ月経過すると自動的にハイライトが消える
   - データは保持されるため、再編集で再表示可能
 
+### 🎯 主な改善点
+
+- **Google Maps採用**: より詳細で正確な地図表示
+- **住所ベース管理**: 緯度経度ではなく住所単位で物件を識別
+- **逆ジオコーディング**: クリック位置から自動的に住所を取得
+- **高精度検索**: Google Maps APIによる正確な住所検索
+
 ## 🚀 セットアップ手順
 
-### 1. LINE Developersでの設定
+### 1. Google Maps APIキーの取得
+
+1. [Google Cloud Console](https://console.cloud.google.com/)にアクセス
+2. 新しいプロジェクトを作成（または既存のプロジェクトを選択）
+3. 「APIとサービス」→「ライブラリ」に移動
+4. 以下のAPIを有効化:
+   - **Maps JavaScript API**
+   - **Geocoding API**
+   - **Places API**
+5. 「APIとサービス」→「認証情報」に移動
+6. 「認証情報を作成」→「APIキー」を選択
+7. 作成されたAPIキーをコピー
+8. （推奨）APIキーの制限を設定:
+   - アプリケーションの制限: HTTPリファラー
+   - APIの制限: Maps JavaScript API, Geocoding API, Places API
+
+### 2. LINE Developersでの設定
 
 1. [LINE Developers Console](https://developers.line.biz/console/)にアクセス
 2. プロバイダーを作成（既存のものを使用してもOK）
@@ -57,17 +86,29 @@
    - **ボットリンク機能**: オプション（必要に応じて）
 8. 作成後、**LIFF ID**をコピー
 
-### 2. アプリケーションの設定
+### 3. アプリケーションの設定
 
-`app.js` ファイルの15行目を編集:
+#### Google Maps APIキーの設定
+
+`index.html` ファイルの最後の方にあるGoogle Maps APIの読み込み部分を編集:
+
+```html
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&language=ja&callback=initMap" async defer></script>
+```
+
+`YOUR_GOOGLE_MAPS_API_KEY` を取得したAPIキーに置き換えてください。
+
+#### LIFF IDの設定
+
+`app.js` ファイルの32行目を編集:
 
 ```javascript
-const liffId = '2006643843-XXXXXXXX'; // ここに取得したLIFF IDを設定
+const liffId = '2008888917-5LvLxAk1'; // ここに取得したLIFF IDを設定
 ```
 
 実際のLIFF IDに置き換えてください。
 
-### 3. デプロイ
+### 4. デプロイ
 
 以下のファイルをWebサーバーにアップロード:
 - `index.html`
@@ -93,11 +134,11 @@ git push -u origin main
 # Settings > Pages でブランチを選択してデプロイ
 ```
 
-### 4. LIFF URLの更新
+### 5. LIFF URLの更新
 
 デプロイ後、LINE Developers ConsoleのLIFF設定で、エンドポイントURLを実際のデプロイ先URLに更新してください。
 
-### 5. テスト
+### 6. テスト
 
 1. LINE Developers ConsoleのLIFFタブで「LIFF URL」をコピー
 2. LINEアプリでそのURLを開く、または友だちに送信して開く
