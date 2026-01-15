@@ -43,6 +43,7 @@ header h1 {
     width: 100%;
     min-height: 400px;
     z-index: 1;
+    cursor: crosshair;
 }
 
 #info {
@@ -75,6 +76,189 @@ header h1 {
 #user-info p {
     margin: 5px 0;
     color: #333;
+}
+
+/* Search Panel */
+#search-panel {
+    background-color: #fff;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+#search-panel h3 {
+    font-size: 15px;
+    margin-bottom: 12px;
+    color: #06C755;
+    font-weight: 600;
+}
+
+.search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.search-row {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 100px;
+}
+
+.search-row label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.search-row input {
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.search-row input:focus {
+    outline: none;
+    border-color: #06C755;
+}
+
+#search-btn {
+    padding: 8px 20px;
+    min-width: 100px;
+}
+
+/* Record Panel */
+#record-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    padding: 20px;
+    border-top: 2px solid #06C755;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+    z-index: 2000;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+#record-panel h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #06C755;
+    font-weight: 600;
+}
+
+#record-info {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 10px;
+    padding: 8px;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+}
+
+#memo-input {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    margin-bottom: 12px;
+    transition: border-color 0.3s;
+}
+
+#memo-input:focus {
+    outline: none;
+    border-color: #06C755;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-primary, .btn-secondary, .btn-danger {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    flex: 1;
+    min-width: 100px;
+}
+
+.btn-primary {
+    background-color: #06C755;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #00B900;
+}
+
+.btn-primary:active {
+    background-color: #009900;
+}
+
+.btn-secondary {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background-color: #e0e0e0;
+}
+
+.btn-danger {
+    background-color: #ff4444;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #dd2222;
+}
+
+.info-note {
+    background-color: #f0f9ff;
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid #06C755;
+    font-size: 13px;
+    color: #555;
+}
+
+/* Yellow highlight for recorded properties */
+.property-highlight {
+    fill: yellow;
+    fill-opacity: 0.6;
+    stroke: #FFD700;
+    stroke-width: 2;
+    stroke-opacity: 0.8;
+}
+
+.property-highlight-expired {
+    fill: transparent;
+    fill-opacity: 0;
 }
 
 footer {
@@ -147,5 +331,25 @@ footer {
     
     #info p {
         font-size: 13px;
+    }
+    
+    .search-form {
+        flex-direction: column;
+    }
+    
+    .search-row {
+        width: 100%;
+    }
+    
+    #search-btn {
+        width: 100%;
+    }
+    
+    .button-group {
+        flex-direction: column;
+    }
+    
+    .btn-primary, .btn-secondary, .btn-danger {
+        width: 100%;
     }
 }

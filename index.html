@@ -17,11 +17,48 @@
             <div id="status">読み込み中...</div>
         </header>
         
+        <!-- 住所検索パネル -->
+        <div id="search-panel">
+            <h3>📍 住所検索</h3>
+            <div class="search-form">
+                <div class="search-row">
+                    <label>町名:</label>
+                    <input type="text" id="town-name" placeholder="例: 原町田">
+                </div>
+                <div class="search-row">
+                    <label>丁目:</label>
+                    <input type="text" id="chome" placeholder="例: 1">
+                </div>
+                <div class="search-row">
+                    <label>番地:</label>
+                    <input type="text" id="banchi" placeholder="例: 2">
+                </div>
+                <div class="search-row">
+                    <label>号:</label>
+                    <input type="text" id="go" placeholder="例: 3">
+                </div>
+                <button id="search-btn" class="btn-primary">🔍 検索</button>
+            </div>
+        </div>
+        
         <div id="map"></div>
+        
+        <!-- 物件記録パネル -->
+        <div id="record-panel" style="display:none;">
+            <h3>📝 物件記録</h3>
+            <div id="record-info"></div>
+            <textarea id="memo-input" placeholder="メモを入力してください..."></textarea>
+            <div class="button-group">
+                <button id="save-record-btn" class="btn-primary">💾 記録を保存</button>
+                <button id="delete-record-btn" class="btn-danger" style="display:none;">🗑️ 記録を削除</button>
+                <button id="cancel-record-btn" class="btn-secondary">✕ キャンセル</button>
+            </div>
+        </div>
         
         <div id="info">
             <h2>町田市について</h2>
             <p>東京都の南端に位置する町田市の地図です。</p>
+            <p class="info-note">💡 地図上をクリックして物件を選択し、メモを記録できます。記録された物件は黄色くハイライトされます。</p>
             <div id="user-info"></div>
         </div>
         
