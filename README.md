@@ -6,13 +6,7 @@
 
 ## 📋 機能
 
-- 🗺️ 町田市の地図表示（Leaflet.js使用）
-- 📍 主要スポットのマーカー表示
-  - 町田駅
-  - 町田市役所
-  - 薬師池公園
-  - 町田リス園
-  - 町田天満宮
+- 🗺️ 町田市の地図表示（Google Maps使用）
 - 👤 LINEユーザープロフィール表示
 - 📱 レスポンシブデザイン
 
@@ -88,25 +82,57 @@
 
 ### 3. アプリケーションの設定
 
-#### Google Maps APIキーの設定
+#### 🔐 機密情報の設定（重要）
 
-`index.html` ファイルの最後の方にあるGoogle Maps APIの読み込み部分を編集:
+このアプリケーションでは、APIキーやLIFF IDなどの機密情報を別ファイルで管理しています。
 
-```html
-<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&language=ja&callback=initMap" async defer></script>
-```
+1. **設定ファイルの作成**
 
-`YOUR_GOOGLE_MAPS_API_KEY` を取得したAPIキーに置き換えてください。
+   `config.js` ファイルを作成し、以下の内容を記述:
+   
+   ```javascript
+   // 機密情報設定ファイル
+   // このファイルはGitにコミットしないでください
 
-#### LIFF IDの設定
+   const CONFIG = {
+       // LIFF ID（LINE Developers Consoleから取得）
+       LIFF_ID: 'YOUR_LIFF_ID_HERE',
+       
+       // Google Maps API Key（必須）
+       GOOGLE_MAPS_API_KEY: 'YOUR_GOOGLE_MAPS_API_KEY_HERE'
+   };
+   ```
 
-`app.js` ファイルの32行目を編集:
+2. **LIFF IDの設定**
 
-```javascript
-const liffId = '2008888917-5LvLxAk1'; // ここに取得したLIFF IDを設定
-```
+   `config.js` ファイルを開き、取得したLIFF IDを設定:
+   
+   ```javascript
+   const CONFIG = {
+       // LIFF ID（LINE Developers Consoleから取得）
+       LIFF_ID: 'YOUR_LIFF_ID_HERE',  // ← ここに実際のLIFF IDを設定
+   };
+   ```
 
-実際のLIFF IDに置き換えてください。
+3. **Google Maps APIキーの設定**
+
+   `config.js` ファイルにGoogle Maps APIキーを追加:
+   
+   ```javascript
+   const CONFIG = {
+       // LIFF ID（LINE Developers Consoleから取得）
+       LIFF_ID: 'YOUR_LIFF_ID_HERE',
+       
+       // Google Maps API Key
+       GOOGLE_MAPS_API_KEY: 'YOUR_GOOGLE_MAPS_API_KEY_HERE'  // ← ここに実際のAPIキーを設定
+   };
+   ```
+
+#### ⚠️ セキュリティに関する重要な注意
+
+- **`config.js` ファイルは絶対にGitにコミットしないでください**
+- `.gitignore` に `config.js` が含まれていることを確認してください
+- チーム開発の場合、各メンバーが自分の `config.js` を作成する必要があります
 
 ### 4. デプロイ
 
@@ -114,6 +140,9 @@ const liffId = '2008888917-5LvLxAk1'; // ここに取得したLIFF IDを設定
 - `index.html`
 - `style.css`
 - `app.js`
+- `config.js` （機密情報を含むため、Gitにはコミットせず直接アップロード）
+
+**重要**: `config.js` は `.gitignore` で除外されているため、デプロイ時に手動でアップロードする必要があります。
 
 #### デプロイ先の例:
 - **GitHub Pages**: 無料、簡単
@@ -196,19 +225,25 @@ git push -u origin main
 ## 🛠️ 技術スタック
 
 - **LIFF SDK 2.x**: LINE Front-end Framework
-- **Leaflet.js 1.9.4**: オープンソース地図ライブラリ
-- **OpenStreetMap**: 地図タイルデータ
+- **Google Maps JavaScript API**: 地図表示とジオコーディング
+- **Google Maps Geocoding API**: 住所検索と逆ジオコーディング
+- **Google Maps Places API**: 場所情報の取得
 - **HTML5/CSS3/JavaScript**: フロントエンド
+- **LocalStorage**: クライアントサイドデータ保存
 
 ## 📂 ファイル構成
 
 ```
 machida-map-liff/
-├── index.html      # メインHTMLファイル
-├── style.css       # スタイルシート
-├── app.js          # JavaScriptロジック（LIFF初期化、地図表示）
-└── README.md       # このファイル
+├── index.html         # メインHTMLファイル
+├── style.css          # スタイルシート
+├── app.js             # JavaScriptロジック（LIFF初期化、地図表示）
+├── config.js          # 機密情報設定ファイル（Gitから除外）
+├── .gitignore         # Git除外設定
+└── README.md          # このファイル
 ```
+
+**注意**: `config.js` は `.gitignore` で除外されているため、リポジトリには含まれません。各開発者が自分で作成する必要があります。
 
 ## 🔧 カスタマイズ
 
@@ -235,8 +270,12 @@ const MACHIDA_CENTER = {
     lng: 139.4467  // 経度
 };
 
-// ズームレベル: 1-19（数字が大きいほど拡大）
-map = L.map('map').setView([MACHIDA_CENTER.lat, MACHIDA_CENTER.lng], 13);
+// initializeMap()関数内で
+map = new google.maps.Map(document.getElementById('map'), {
+    center: MACHIDA_CENTER,
+    zoom: 13,  // ズームレベル: 1-20（数字が大きいほど拡大）
+    // その他のオプション...
+});
 ```
 
 ### デザインのカスタマイズ

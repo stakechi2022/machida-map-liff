@@ -31,8 +31,8 @@ async function initializeLiff() {
         statusElement.className = 'loading';
         statusElement.textContent = 'LIFF初期化中...';
 
-        // LIFF IDを環境変数から取得（実際の使用時は設定が必要）
-        const liffId = '2008888917-5LvLxAk1'; // ここに実際のLIFF IDを設定してください
+        // LIFF IDを設定ファイルから取得
+        const liffId = CONFIG.LIFF_ID;
         
         await liff.init({ liffId: liffId });
 
@@ -95,7 +95,7 @@ function initializeMap() {
         infoWindow = new google.maps.InfoWindow();
 
         // 町田市の主要スポットにマーカーを追加
-        addMachidaMarkers();
+        // addMachidaMarkers();
 
         // 地図クリックイベント
         map.addListener('click', (event) => {
@@ -123,6 +123,51 @@ function initializeMap() {
         statusElement.style.color = '#ff4444';
     }
 }
+
+// 町田市の主要スポットにマーカーを追加
+// function addMachidaMarkers() {
+//     const spots = [
+//         {
+//             name: '町田市役所',
+//             lat: 35.5454,
+//             lng: 139.4388,
+//             description: '町田市の行政の中心'
+//         },
+//         {
+//             name: '町田駅',
+//             lat: 35.5421,
+//             lng: 139.4467,
+//             description: 'JR横浜線・小田急線の駅'
+//         },
+//         {
+//             name: '町田薬師池公園',
+//             lat: 35.5833,
+//             lng: 139.4667,
+//             description: '四季折々の自然が楽しめる公園'
+//         }
+//     ];
+
+//     spots.forEach(spot => {
+//         const marker = new google.maps.Marker({
+//             position: { lat: spot.lat, lng: spot.lng },
+//             map: map,
+//             title: spot.name,
+//             icon: {
+//                 url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png'
+//             }
+//         });
+
+//         marker.addListener('click', () => {
+//             infoWindow.setContent(`
+//                 <div style="min-width: 200px; padding: 10px;">
+//                     <h3 style="margin: 0 0 8px 0; color: #06C755; font-size: 14px;">${spot.name}</h3>
+//                     <p style="margin: 5px 0; font-size: 13px;">${spot.description}</p>
+//                 </div>
+//             `);
+//             infoWindow.open(map, marker);
+//         });
+//     });
+// }
 
 // イベントリスナーの設定
 function setupEventListeners() {

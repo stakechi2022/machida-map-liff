@@ -65,9 +65,25 @@
         </footer>
     </div>
 
+    <!-- Config JS (must be loaded before app.js) -->
+    <script src="config.js"></script>
     <!-- App JS (must be loaded before Google Maps callback) -->
     <script src="app.js"></script>
     <!-- Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&language=ja&callback=initMap" async defer></script>
+    <script>
+    (function () {
+        if (!window.CONFIG || !CONFIG.GOOGLE_MAPS_API_KEY) {
+            console.error('Google Maps API key is missing in CONFIG');
+            return;
+        }
+        const key = encodeURIComponent(CONFIG.GOOGLE_MAPS_API_KEY);
+        const src = 'https://maps.googleapis.com/maps/api/js?key=' + key + '&libraries=places&language=ja&callback=initMap';
+        const s = document.createElement('script');
+        s.src = src;
+        s.async = true;
+        s.defer = true;
+        document.head.appendChild(s);
+    })();
+    </script>
 </body>
 </html>
